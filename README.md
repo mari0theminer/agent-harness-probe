@@ -8,6 +8,10 @@ real structure — not from assumptions and not from a template someone else's s
 
 No install. No dependency. No framework.
 
+> **Status — honest about its own coverage, as it asks you to be.** This kit was extracted from
+> a harness that works in one repo. It has not yet been run end-to-end against an unrelated one.
+> If you try it, the result of `CHECKLIST.md` is the most useful bug report you can file.
+
 ---
 
 ## Use it
