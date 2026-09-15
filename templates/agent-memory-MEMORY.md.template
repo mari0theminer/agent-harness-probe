@@ -1,0 +1,16 @@
+# {{agent-name}} Memory Index
+
+<!--
+  How this file works — keep this comment, it is the contract:
+  * ONE LINE per finding, newest anywhere (grouped by topic beats chronological).
+  * Link a detail file (`{{topic}}.md`) when the finding needs more than a line.
+  * Entries are DURABLE TRAPS, not a changelog. Good: "library X emits its bandwidth sample at
+    FRAG_BUFFERED, not FRAG_LOADED — verified by reading the dist, not assumed."
+    Worthless: "added feature Y."
+  * Write an entry whenever something cost you more than ~10 minutes to figure out, or whenever
+    a reasonable assumption turned out to be wrong.
+  * READ THIS FILE BEFORE EXPLORING. That is the whole return on writing it.
+-->
+
+- [Domain map](domain_map.md) — key paths + rules for `{{owned trees}}`, read before exploring
+- {{one-line finding}} — {{the trap, and how it was verified}}

@@ -1,0 +1,49 @@
+# {{Environment name}} sessions
+
+**Applies only when `{{DETECTION CONDITION, e.g. an env var}}`.** Check it before following
+anything here:
+
+```bash
+{{echo "$SOME_VAR"   # "true" => this environment; empty => ignore this file}}
+```
+
+In {{this environment}}, parts of `CLAUDE.md` are written for a machine you don't have. This file
+overrides them. Everything else in `CLAUDE.md` — architecture, the Definition of Done, the agent
+roster, conventions — still applies unchanged.
+
+## {{What CLAUDE.md says to do that is wrong here}}
+
+{{Why it fails here — e.g. it ends in a foreground server and assumes a second terminal.}}
+Do this instead:
+
+```bash
+{{the replacement command}}
+{{how to check readiness / where the status and logs are}}
+```
+
+**Diagnose a failed start in this order** — these are the failures that have actually happened:
+
+| Log says | Meaning | Action |
+|---|---|---|
+| {{message}} | {{cause}} | {{fix}} |
+| {{message}} | {{environment config, not code}} | **Say so and stop** — nothing in here can fix it |
+
+## The gate here is `{{reduced gate}}`, not `{{full gate}}`
+
+| Not run here | Where it must run |
+|---|---|
+| {{suite}} | {{local machine / CI}} |
+
+**Any change opened from this environment must state this** — name what ran and what didn't.
+
+## Not available here
+
+- **{{capability}}**: {{why, and what to do instead}}.
+- **{{capability}}**: {{why}}.
+
+A missing dependency that only the environment owner can add is a **reportable finding, not a
+workaround target**. Don't fake data around it, and don't claim a gate passed that never ran.
+
+## Tooling that does work
+
+{{list}}

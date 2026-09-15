@@ -1,0 +1,109 @@
+---
+name: {{slug}}-feature
+description: Orchestrates {{work type}} across {{the components}}. Researches feasibility first, gates for user go/no-go, routes to specialists, runs QA + security audit, verifies live, and ships a regression test. Use for any feature, bug fix, refactor, or enhancement touching {{these trees}}. Triggers: "add feature", "implement", "fix bug in", "change how X works", "add an endpoint", "how should I build X", and follow-ups like "update this", "redo the {{tree}} part", "fix the QA issue".
+---
+
+# {{Project}} Feature Orchestrator
+
+## What This Does
+Research → **gate** → build → QA ∥ security → live-verify → regression test → report.
+Routes work to specialists, parallel where boundaries allow.
+
+## Model tiering (think with the expensive tier, type with the cheap one)
+- **{{high}}**: `{{analyst}}`, planning + gate (main thread), `{{security}}`.
+- **{{low}}**: `{{builders}}`, `{{qa}}`, live-verify.
+Set per agent frontmatter; don't override to the high tier across the board.
+
+## Execution model (KEY RULE)
+The main thread does **only** Phase 1 (spawn research), Phase 2 (gate), and Phase 7 (report).
+**Everything between the gate and the report runs in subagents.**
+- Main thread **never** edits code, **never** drives the browser, **never** greps source to "just
+  fix it". A one-line fix routes to the owning specialist — inline edits spend the expensive
+  context on cheap work.
+- **The gate is the ONLY interactive checkpoint.** After go, run Phases 3→7 with no further
+  prompts. Re-prompt only if a Phase-4 FAIL needs a scope decision agents can't resolve.
+
+## Token hygiene
+- Subagents write detail to `{{scratch}}/*.md` and return a **terse receipt + path** — never paste
+  full files into orchestrator context.
+- Use a read-only search agent for "where is X" fan-out.
+- Keep plain language only for what the human reads: research memo, security report, final report.
+
+## Phase 0 — Context check
+`{{scratch}}/` exists? partial-update request → re-run only affected agents · new requirements →
+archive to `{{scratch}}_prev/` and start fresh · absent → initial run. Read existing receipts
+first to avoid duplicate work.
+
+## Phase 1 — Research
+Spawn `{{analyst}}`. It never touches product code; it returns the memo as its final message and
+**you** write it to `{{scratch}}/research_{feature}.md`. Memo sections: prior art · does it make
+sense (value vs effort, simpler alternatives, scope cuts) · design-time security · {{legal, if
+applicable}} · affected trees · **BUILD / RECONSIDER / NEEDS-INFO** verdict.
+
+## Phase 2 — GATE (main thread — must actually halt)
+Summarise the memo, then ask go/no-go and **stop until answered**. RECONSIDER → revise scope or
+end. **No code before approval.** On go: this is the last stop.
+
+## Phase 3 — Specialists
+Routing: `{{path}}` → `{{agent}}` · `{{path}}` → `{{agent}}` · `{{path}}` → `{{agent}}`.
+- `{{a}}` runs in parallel with `{{b}}` freely — disjoint trees.
+- **`{{b}}` and `{{c}}` must NOT run in parallel** — both write `{{collision file}}`. Sequence
+  them, or give that pair isolated worktrees.
+- Dependent work (contract needed before consumer) → sequence: `{{producer}}` first.
+- **Join rule:** spawn all parallel agents in a **single message**, join all before proceeding.
+  One retry per agent on incomplete output, else proceed and note the gap.
+Give each agent: the task, files to read first, its receipt path, which other receipts to read.
+Single tree, no boundary crossed → run just that one, skip QA.
+
+## Phase 4 — Verify: QA ∥ Security (parallel)
+Both are read-only over the same build — run them **concurrently** and join both:
+- `{{qa}}` → `{{scratch}}/qa_{feature}_report.md` — contract/boundary checks. Skip only if exactly
+  one tree and no cross-boundary call.
+- `{{security}}` → `{{scratch}}/security_{feature}_report.md` — audit of the branch diff.
+- {{`compliance-auditor` — conditional: only if the Phase-1 memo flagged legal surface or the diff
+  adds dependencies.}}
+**Then ONE combined fix loop:** collect the union of all FAILs, re-run the owning specialist(s)
+**once** with everything together, then re-verify the affected boundary. Proceed when reports are
+PASS (or WARNs accepted).
+
+## Phase 5 — Live verify {{only if a runnable instance exists}}
+Spawn a cheap-tier subagent to drive {{the UI/API at <url>}} and confirm the change works.
+**Never on the main thread.** It returns a PASS/FAIL receipt + what it confirmed.
+
+## Phase 6 — Regression test
+
+### Feasibility triage — do this FIRST
+- **Test REQUIRED** — observable behaviour at {{the e2e layer}}: {{examples}}.
+- **Gated one layer down** — logic that cannot be deterministically observed there ({{examples:
+  async/timing/internals behind a mock}}). Cover with unit tests and **say so** in the report.
+
+Never fake an end-to-end test by mocking the boundary under test. An admitted gap beats a
+vacuous test.
+
+### Writing it
+`{{test-owner agent}}` writes `{{test path pattern}}`. **Assert unconditionally** — no
+`if (x.length) expect(...)`, no waits for requests the test never triggers. **Run it before
+opening the change** — never defer to CI. Keep this sequential after Phase 5: live-verify can
+change the assertions.
+
+## Phase 7 — Synthesize & report
+```markdown
+## Feature: {name}
+### Research verdict: {BUILD/…} — {one line}
+### Changes: {tree} — {summary}
+### QA: PASS/WARN/FAIL — {issues}
+### Security: PASS/FAIL — {findings}
+### Live verify: {what was confirmed}
+### Regression test: {path, or "none — gated one layer down because …"}
+### Remaining checklist: {gate command} · {scans} · {coverage}
+```
+FAILs → describe clearly, ask whether to fix before finishing.
+
+## Constraints (hard — from CLAUDE.md)
+- {{gate}} must pass; {{scans}} clean; {{coverage floor}}.
+- {{frozen contract}} · {{frozen name}} · {{mocking rule}}.
+
+## Error handling
+- Missing receipt → read source directly, don't block.
+- Conflicting interfaces between agents → surface in the report, don't silently pick one.
+- One retry per agent on clearly incomplete output; else proceed and note the gap.

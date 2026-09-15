@@ -1,0 +1,87 @@
+<!--
+  Template for the target repo's CLAUDE.md. Fill every {{placeholder}} from a discovered fact
+  or an interview answer. DELETE any section you cannot ground. Keep the result under ~200 lines.
+-->
+
+# CLAUDE.md
+
+This file provides guidance to Claude Code when working with code in this repository.
+Deep-dives live in `docs/` — keep this file under ~200 lines; add detail there, not here.
+
+## Project Overview
+
+{{One paragraph: what this project is and who runs it.}}
+
+- **{{component}}**: {{stack}} — {{dir}}{{, port N}}
+- **{{component}}**: {{stack}} — {{dir}}{{, port N}}
+
+{{Data/control flow in 1–3 sentences: what calls what, where state lives.}}
+
+## Hard Constraints
+
+<!-- Only things whose violation LOOKS LIKE AN IMPROVEMENT. If it's obvious, drop it. -->
+
+- {{Frozen name/typo/shape}} — never change{{, because <consumer>}}
+- {{Contract that external clients depend on}} — no breaking changes
+- {{Hardcoded port/path and where it is duplicated}}
+- {{Test rule, e.g. what may and may not be mocked}}
+
+## Before Committing
+
+**Always run `{{gate command}}` before committing.** {{What it covers.}}
+{{Prerequisites: what must already be running.}}
+
+{{If CI does not run on PRs, say so here in bold — the local run IS the gate.}}
+
+## Definition of Done (every change)
+
+- [ ] `{{gate command}}` passes
+- [ ] {{test requirement per layer}}
+- [ ] {{coverage floor, if any}}
+- [ ] {{security scans}}
+- [ ] Docs updated in the same change (see table below)
+
+## Development
+
+```bash
+{{dev command}}     # {{what it starts}}
+{{gate command}}    # {{the full local gate}}
+{{seed/fixture command}}
+{{focused test command}}
+```
+
+{{Reload behaviour: does a watcher rebuild on save? If yes: "never kill/restart <x> — poll
+instead" and give the poll command. This one line prevents a whole class of wasted sessions.}}
+
+Logs: {{paths}}.
+
+## Documentation Sync
+
+| Doc | Update when… |
+|-----|-------------|
+| `docs/{{a}}.md` | {{trigger}} |
+| `CLAUDE.md` | Project-wide behaviour, architecture, or hard constraints change |
+
+## Harness: Feature Development
+
+For any feature, bug fix, or enhancement, use the `{{slug}}-feature` skill. Simple questions or
+single-file clarifications don't need the agent team.
+
+| Agent | Model | Role |
+|-------|-------|------|
+| `{{analyst}}` | {{high tier}} | Research before building; go/no-go memo. Never edits code |
+| `{{builder-a}}` | {{low tier}} | {{owned trees}} |
+| `{{builder-b}}` | {{low tier}} | {{owned trees}} |
+| `{{qa}}` | {{low tier}} | Cross-boundary contract validation. No `Edit` |
+| `{{security}}` | {{high tier}} | Audits written code. No `Edit` |
+
+Rules:
+
+- **Routing**: {{path glob}} → `{{agent}}` · {{path glob}} → `{{agent}}`
+- **Parallelism**: `{{a}}` ∥ `{{b}}` (disjoint trees). `{{b}}` and `{{c}}` **never in parallel** —
+  both write `{{collision file}}`; sequence them or give one a worktree.
+- **Model tiering**: {{high}} = research/security/planning; {{low}} = build/QA/verify. Don't
+  blanket-upgrade.
+- The main thread does research-spawn, gate, and final report only — never inline edits.
+- Each agent has memory in `.claude/agent-memory/<agent>/` — read it before re-exploring.
+- Intermediate outputs go to `{{scratch dir}}/`; agents return terse receipts + a path.
